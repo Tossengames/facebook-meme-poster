@@ -1,28 +1,33 @@
-name: Post Meme to Facebook
+# .github/workflows/post-memes.yml
+name: Auto Post Memes
 
 on:
   schedule:
-    - cron: "0 9,15,21 * * *"  # 3 times a day: 9am, 3pm, 9pm UTC
-  workflow_dispatch:
+    - cron: "5 8 * * *"   # 8:05 AM UTC
+    - cron: "5 14 * * *"  # 2:05 PM UTC
+    - cron: "5 20 * * *"  # 8:05 PM UTC
+  workflow_dispatch:      # Allow manual trigger from GitHub UI
 
 jobs:
-  post-meme:
-    runs-on: ubuntu-latest
+  post:
+    runs-on: ubuntu-latest # Specify the operating system for the runner
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Use the latest stable version for security and features
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5 # Use the latest stable version
         with:
-          python-version: "3.x"
+          python-version: "3.9" # Pin to a specific Python version for reproducibility
+          cache: 'pip'          # Cache pip dependencies for faster builds
 
-      - name: Install dependencies
-        run: pip install feedparser requests
+      - name: Install Python Dependencies
+        run: pip install feedparser requests # Install required libraries
 
-      - name: Run script
+      - name: Run Meme Posting Script
         env:
-          PAGE_ID: ${{ secrets.PAGE_ID }}
+          RSS_URL: ${{ secrets.RSS_URL }}
           PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
-        run: python post-meme.py
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+        run: python post-to-facebook.py # Execute the Python script
