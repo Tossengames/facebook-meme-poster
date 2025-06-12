@@ -19,14 +19,14 @@ POST_PREFIX = "🤣 Daily Meme: " # Customize this prefix. Set to "" if you don'
 DEFAULT_HASHTAGS = ["#Meme", "#LOL", "#Funny", "#DankMemes", "#Humor", "#Relatable", "#Comedy", "#MemesDaily", "#InstaMemes", "#Laughter", "#MemeLife", "#Hilarious", "#FunniestMemes"] # Customize your hashtags here
 
 # Keywords to filter by (optional)
-# Only entries containing at least one of these keywords in their title will be considered.
-KEYWORDS = [] # Keywords filter is now re-enabled
+# Set to empty list [] to disable filtering.
+# Only entries containing at least one of these keywords in their title will be considered if not empty.
+KEYWORDS = [] # Keywords filter is now DISABLED
 
 def fetch_memes():
     """
     Fetches entries from the RSS feed by first getting raw content,
-    then parsing it, and filters based on keywords.
-    Attempts to find an image URL within the entry.
+    then parsing it, and attempts to find an image URL within the entry.
     Returns a list of tuples: (title, link, image_url_if_any).
     """
     if not RSS_URL:
@@ -73,19 +73,17 @@ def fetch_memes():
                     image_url = media_item['url']
                     break
 
-        # Corrected typo: was .enclosure, should be .enclosures
+        # Corrected typo: was .enclosure, should be .enclosures (this ensures correct parsing)
         if not image_url and hasattr(entry, 'enclosures') and entry.enclosures:
             for enclosure in entry.enclosures:
                 if 'href' in enclosure and enclosure.get('type', '').startswith('image/'):
                     image_url = enclosure['href']
                     break
 
-        # --- IMPORTANT CHANGE: Only add to the list if an image URL is found ---
-        if image_url:
-            memes.append((entry.title, link, image_url))
-            logging.info(f"Found meme with image: '{entry.title}' (Link: {link}, Image: {image_url})")
-        else:
-            logging.info(f"Skipping entry '{entry.title}' - no image URL found.")
+        # --- REVERTED CHANGE: This now adds entry regardless of image_url ---
+        # If image_url is None, post_to_facebook will fall back to a link post
+        memes.append((entry.title, link, image_url))
+        logging.info(f"Found entry: '{entry.title}' (Link: {link}, Image: {image_url or 'N/A'})")
 
     return memes
 
@@ -110,8 +108,7 @@ def post_to_facebook(message, link, image_url=None):
         payload["caption"] = message
         logging.info(f"Attempting to post image: '{message}' from {image_url}")
     else:
-        # Fallback to posting a link is effectively disabled by fetch_memes,
-        # but the logic remains if image_url somehow became None unexpectedly.
+        # Fallback to posting a link if no image URL
         endpoint = f"{api_url}/feed"
         payload["message"] = message
         payload["link"] = link
