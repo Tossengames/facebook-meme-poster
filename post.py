@@ -15,12 +15,13 @@ PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 PAGE_ID = os.getenv("PAGE_ID")
 
 # Keywords to filter by (optional)
-# Only entries containing at least one of these keywords in their title will be considered.
-KEYWORDS = []
+# This has been disabled for testing, but can be re-enabled later.
+KEYWORDS = [] # Set to empty list to disable filtering for testing
 
 def fetch_memes():
     """
-    Fetches entries from the RSS feed and filters them based on keywords.
+    Fetches entries from the RSS feed by first getting raw content,
+    then parsing it, and filters based on keywords.
     Attempts to find an image URL within the entry.
     Returns a list of tuples: (title, link, image_url_if_any).
     """
@@ -28,13 +29,26 @@ def fetch_memes():
         logging.error("RSS_URL environment variable is not set. Cannot fetch memes.")
         return []
 
+    raw_feed_content = None
     try:
-        feed = feedparser.parse(RSS_URL)
+        # First, fetch the raw content of the RSS feed using requests
+        response = requests.get(RSS_URL, timeout=15) # Added a timeout for robustness
+        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+        raw_feed_content = response.text
+        logging.info(f"Successfully fetched raw RSS feed content from {RSS_URL}. Length: {len(raw_feed_content)} characters. First 200 chars: '{raw_feed_content[:200]}'")
+
+        # Now, pass the raw content to feedparser
+        feed = feedparser.parse(raw_feed_content)
         if feed.bozo:
             logging.warning(f"Error parsing RSS feed (bozo bit set): {feed.bozo_exception}")
 
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Failed to fetch RSS feed content from {RSS_URL}: {e}")
+        return []
     except Exception as e:
-        logging.error(f"Failed to parse RSS feed from {RSS_URL}: {e}")
+        logging.error(f"An unexpected error occurred during RSS feed parsing: {e}")
+        if raw_feed_content:
+            logging.error(f"Raw content that caused error (first 200 chars): '{raw_feed_content[:200]}'")
         return []
 
     memes = []
