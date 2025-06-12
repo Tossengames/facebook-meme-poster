@@ -16,7 +16,7 @@ PAGE_ID = os.getenv("PAGE_ID")
 
 # Keywords to filter by (optional)
 # Only entries containing at least one of these keywords in their title will be considered.
-KEYWORDS = ["funny", "meme", "lol", "humor", "relatable", "joke"]
+KEYWORDS = []
 
 def fetch_memes():
     """
