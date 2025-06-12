@@ -20,7 +20,7 @@ DEFAULT_HASHTAGS = ["#Meme", "#LOL", "#Funny", "#DankMemes", "#Humor", "#Relatab
 
 # Keywords to filter by (optional)
 # Only entries containing at least one of these keywords in their title will be considered.
-KEYWORDS = ["funny", "meme", "lol", "humor", "relatable", "joke"] # Keywords filter is now re-enabled
+KEYWORDS = [] # Keywords filter is now re-enabled
 
 def fetch_memes():
     """
