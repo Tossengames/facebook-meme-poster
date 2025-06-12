@@ -14,9 +14,13 @@ RSS_URL = os.getenv("RSS_URL")
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 PAGE_ID = os.getenv("PAGE_ID")
 
+# Customization for your posts
+POST_PREFIX = "🤣 Daily Meme: " # Customize this prefix. Set to "" if you don't want a prefix.
+DEFAULT_HASHTAGS = ["#Meme", "#LOL", "#Funny", "#DankMemes", "#Humor", "#Relatable", "#Comedy", "#MemesDaily", "#InstaMemes", "#Laughter", "#MemeLife", "#Hilarious", "#FunniestMemes"] # Customize your hashtags here
+
 # Keywords to filter by (optional)
-# This has been disabled for testing, but can be re-enabled later.
-KEYWORDS = [] # Set to empty list to disable filtering for testing
+# Only entries containing at least one of these keywords in their title will be considered.
+KEYWORDS = ["funny", "meme", "lol", "humor", "relatable", "joke"] # Keywords filter is now re-enabled
 
 def fetch_memes():
     """
@@ -69,14 +73,19 @@ def fetch_memes():
                     image_url = media_item['url']
                     break
 
+        # Corrected typo: was .enclosure, should be .enclosures
         if not image_url and hasattr(entry, 'enclosures') and entry.enclosures:
             for enclosure in entry.enclosures:
                 if 'href' in enclosure and enclosure.get('type', '').startswith('image/'):
                     image_url = enclosure['href']
                     break
 
-        memes.append((entry.title, link, image_url))
-        logging.info(f"Found meme: '{entry.title}' (Link: {link}, Image: {image_url or 'N/A'})")
+        # --- IMPORTANT CHANGE: Only add to the list if an image URL is found ---
+        if image_url:
+            memes.append((entry.title, link, image_url))
+            logging.info(f"Found meme with image: '{entry.title}' (Link: {link}, Image: {image_url})")
+        else:
+            logging.info(f"Skipping entry '{entry.title}' - no image URL found.")
 
     return memes
 
@@ -101,7 +110,8 @@ def post_to_facebook(message, link, image_url=None):
         payload["caption"] = message
         logging.info(f"Attempting to post image: '{message}' from {image_url}")
     else:
-        # Fallback to posting a link if no image URL
+        # Fallback to posting a link is effectively disabled by fetch_memes,
+        # but the logic remains if image_url somehow became None unexpectedly.
         endpoint = f"{api_url}/feed"
         payload["message"] = message
         payload["link"] = link
@@ -134,8 +144,23 @@ def main():
 
     if memes:
         meme_title, meme_link, meme_image_url = random.choice(memes)
+
+        # Construct the final message with prefix and hashtags
+        final_message_parts = []
+        if POST_PREFIX:
+            final_message_parts.append(POST_PREFIX)
+
+        final_message_parts.append(meme_title) # Add the original meme title
+
+        # Append hashtags, joined by a space
+        hashtags_string = " ".join(DEFAULT_HASHTAGS)
+        final_message_parts.append(hashtags_string)
+
+        final_message = "\n\n".join(final_message_parts) # Join parts with two newlines for spacing
+
         logging.info(f"Selected meme: Title='{meme_title}', Link='{meme_link}', Image='{meme_image_url}'")
-        post_to_facebook(meme_title, meme_link, meme_image_url)
+        logging.info(f"Posting message: '{final_message}'")
+        post_to_facebook(final_message, meme_link, meme_image_url)
     else:
         logging.info("No memes found or matched the filter. Skipping post.")
     logging.info("Meme posting process finished.")
