@@ -1,0 +1,28 @@
+# .github/workflows/test.yml
+name: Test Facebook Post
+
+on:
+  workflow_dispatch:      # Allows manual trigger from GitHub UI
+
+jobs:
+  test_post:
+    runs-on: ubuntu-latest # Runs on a fresh Ubuntu virtual machine
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4 # Get your repository code
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5 # Configure Python 3.9
+        with:
+          python-version: "3.9"
+
+      - name: Install Python Dependencies
+        run: pip install requests # Install the 'requests' library needed for API calls
+
+      - name: Run Facebook Test Post Script
+        env:
+          # Pass your Facebook secrets as environment variables to the script
+          PAGE_ACCESS_TOKEN: ${{ secrets.PAGE_ACCESS_TOKEN }}
+          PAGE_ID: ${{ secrets.PAGE_ID }}
+        run: python test.py # Execute the test.py script
