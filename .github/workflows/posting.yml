@@ -4,11 +4,11 @@ name: Scheduled Meme Poster
 on:
   schedule:
     # 8:05 AM UTC (11:05 AM EEST)
-    - cron: "5 8 * * *"
+ #   - cron: "5 8 * * *"
     # 2:05 PM UTC (5:05 PM EEST)
-    - cron: "5 14 * * *"
+   # - cron: "5 14 * * *"
     # 8:05 PM UTC (11:05 PM EEST)
-    - cron: "5 20 * * *"
+ #   - cron: "5 20 * * *"
   workflow_dispatch:      # Allows manual trigger from GitHub UI
 
 jobs:
